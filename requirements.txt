@@ -1,0 +1,10 @@
+Django==2.2.6
+django-environ==0.4.5
+django-user-agents==0.4.0
+djangorestframework==3.10.3
+psycopg2-binary==2.8.3
+pytz==2019.3
+PyYAML==5.1.2
+sqlparse==0.3.0
+ua-parser==0.8.0
+user-agents==2.0
