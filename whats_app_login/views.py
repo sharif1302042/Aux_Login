@@ -1,3 +1,7 @@
+import json
+
+from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from rest_framework import status
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -31,13 +35,31 @@ class QrCodeGenerator(APIView):
             return Response({"error_code": "errors"}, status=status.HTTP_200_OK)
 
 
-class LoginCredentialView(APIView):
-
+class LoginCredentialFromAPP(APIView):
     def post(self, request):
-        serilizer = LoginCredentialSerializer(data=request.data)
-        if serilizer.is_valid():
-            if circle_backends.is_user_connect_id_exists('01780510000'):
-                pass
-            return Response({'error_code': "Invalid Connect ID"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serilizer = LoginCredentialSerializer(data=request.data, )                  #valided requested data via serializer
+            if serilizer.is_valid():
+                if LoginCredential.objects.verify_user(serilizer.data, request.user.username):  #varify the requested user credentials
+                    return Response({"credentials": serilizer.data, "user_name": request.user.username},
+                                    status=status.HTTP_200_OK)
+            return Response({'error_code': serilizer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({'error_code': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'error_code': "Invalid Data"}, status=status.HTTP_400_BAD_REQUEST)
+
+#####################################for websocket#########################
+
+class Home(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'otp.html'
+
+    def get(self, request):
+        return Response({"room": "room"}, status=status.HTTP_200_OK)
+
+
+def room(request, room_name):
+    return render(request, 'room.html', {
+        'room_name_json': mark_safe(json.dumps(room_name))
+    })

@@ -45,6 +45,7 @@ DEFAULT_APPS = [
     'django.contrib.staticfiles',
 ]
 THIRD_PARTY_APPS = [
+    'channels',
     'rest_framework',
     'django_user_agents',
 ]
@@ -85,6 +86,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'aux_login.wsgi.application'
+ASGI_APPLICATION = "aux_login.routing.application"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
