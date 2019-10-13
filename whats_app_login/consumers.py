@@ -1,12 +1,12 @@
-# chat/consumers.py
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
 import json
-import asyncio
-from channels.consumer import AsyncConsumer
+
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import JsonWebsocketConsumer, WebsocketConsumer
+
+from whats_app_login.models import Client
 
 
-class Consumer(WebsocketConsumer):
+class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
@@ -16,7 +16,6 @@ class Consumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-
         self.accept()
 
     def disconnect(self, close_code):
@@ -26,8 +25,8 @@ class Consumer(WebsocketConsumer):
             self.channel_name
         )
 
-    # Receive message from WebSocket
     def receive(self, text_data=None, bytes_data=None):
+        # Receive message from WebSocket
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
@@ -35,17 +34,14 @@ class Consumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
-                'type': 'handle_otp',
-                'message': message,
-                'sharif': 'sharif'
+                'type': 'chat_message',
+                'message': message
             }
         )
 
     # Receive message from room group
-    def handle_otp(self, event):
+    def chat_message(self, event):
         message = event['message']
-        print("Your OTP is :", event['message'])
-        print("Your_name is:", event['sharif'])
 
         # Send message to WebSocket
         self.send(text_data=json.dumps({
@@ -53,11 +49,25 @@ class Consumer(WebsocketConsumer):
         }))
 
 
-class OTPConsumer(AsyncConsumer):
-    async def websocket_connect(self, event):
-        print("connected ", event)
+class Consumer(WebsocketConsumer):
 
-    async def websocket_receive(self, event):
-        print("connected ", event)
+    def connect(self):
+        # Make a database row with our channel name
+        Client.objects.create(channel_name=self.channel_name)
 
+    def disconnect(self, close_code):
+        # Note that in some rare cases (power loss, etc) disconnect may fail
+        # to run; this naive example would leave zombie channel names around.
+        Client.objects.filter(channel_name=self.channel_name).delete()
 
+    def chat_message(self, event):
+        # Handles the "chat.message" event when it's sent to us.
+        self.send(text_data=event["text"])
+
+# from channels.layers import get_channel_layer
+#
+# channel_layer = get_channel_layer()
+# await channel_layer.send("channel_name", {
+#     "type": "chat.message",
+#     "text": "Hello there!",
+# })

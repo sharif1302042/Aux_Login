@@ -1,5 +1,8 @@
 import json
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from rest_framework import status
@@ -25,7 +28,7 @@ class QrCodeGenerator(APIView):
                 "browser_name": request.user_agent.browser.family,
                 "browser_version": request.user_agent.browser.version_string,
                 "user_ip": request.META.get('REMOTE_ADDR'),
-                "user_name": "sharif_42"
+                "identifier":123456
             }
             qr_code = qr_code_generator.qr_code_with_pyqrcode(credentials)
             print(qr_code)
@@ -50,6 +53,14 @@ class LoginCredentialFromAPP(APIView):
 
 
 #####################################for websocket#########################
+def alarm(request):
+    layer = get_channel_layer()
+    print(layer)
+    async_to_sync(layer.group_send)('events', {
+        'type': 'events.alarm',
+        'content': 'triggered'
+    })
+    return HttpResponse('<p>Done</p>')
 
 class Home(APIView):
     renderer_classes = [TemplateHTMLRenderer]

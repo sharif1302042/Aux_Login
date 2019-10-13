@@ -47,3 +47,9 @@ class LoginCredential(models.Model):
         indexes = (
             BrinIndex(fields=["id", "created_at", "updated_at"]),
         )
+
+class Client(models.Model):
+    channel_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.channel_name

@@ -8,4 +8,6 @@ urlpatterns = [
     ###################for web socket################################
     path('home/', views.Home.as_view(), name='home'),
     path('otp/<str:room_name>/', views.room, name='room'),
+
+    path('event/',views.alarm,name='event')
 ]
