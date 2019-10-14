@@ -11,6 +11,7 @@ class LoginCredentialManager(models.Manager):
     def verify_user(self, requested_data, user):
         if circle_backends.is_user_connect_id_exists(user):
             login_credentials = self.filter(user__username=user)[0]
+
             if not login_credentials:
                 raise Exception("No Info Found")
 

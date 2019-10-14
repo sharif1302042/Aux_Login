@@ -9,5 +9,5 @@ urlpatterns = [
     path('home/', views.Home.as_view(), name='home'),
     path('otp/<str:room_name>/', views.room, name='room'),
 
-    path('event/',views.alarm,name='event')
+    path('event_triger/',views.event_triger,name='event')
 ]

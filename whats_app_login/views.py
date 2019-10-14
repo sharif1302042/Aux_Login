@@ -28,7 +28,7 @@ class QrCodeGenerator(APIView):
                 "browser_name": request.user_agent.browser.family,
                 "browser_version": request.user_agent.browser.version_string,
                 "user_ip": request.META.get('REMOTE_ADDR'),
-                "identifier":123456
+                "identifier": 123456
             }
             qr_code = qr_code_generator.qr_code_with_pyqrcode(credentials)
             print(qr_code)
@@ -41,9 +41,22 @@ class QrCodeGenerator(APIView):
 class LoginCredentialFromAPP(APIView):
     def post(self, request):
         try:
-            serilizer = LoginCredentialSerializer(data=request.data, )                  #valided requested data via serializer
+            serilizer = LoginCredentialSerializer(data=request.data, )  # valided requested data via serializer
             if serilizer.is_valid():
-                if LoginCredential.objects.verify_user(serilizer.data, request.user.username):  #varify the requested user credentials
+                if LoginCredential.objects.verify_user(serilizer.data,
+                                                       request.user.username):  # varify the requested user credentials
+
+                    #This Section is for comunicating from views to consumer that is
+                    #when user is successfully logged in.
+                    channel_layer = get_channel_layer()
+                    print(channel_layer)
+                    async_to_sync(channel_layer.group_send)(
+                        'event_sharif',
+                        {
+                            'type': 'send_message_to_frontend',
+                            'message': "event_trigered_from_views"
+                        }
+                    )
                     return Response({"credentials": serilizer.data, "user_name": request.user.username},
                                     status=status.HTTP_200_OK)
             return Response({'error_code': serilizer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,14 +66,18 @@ class LoginCredentialFromAPP(APIView):
 
 
 #####################################for websocket#########################
-def alarm(request):
-    layer = get_channel_layer()
-    print(layer)
-    async_to_sync(layer.group_send)('events', {
-        'type': 'events.alarm',
-        'content': 'triggered'
-    })
+def event_triger(request):
+    channel_layer = get_channel_layer()
+    print(channel_layer)
+    async_to_sync(channel_layer.group_send)(
+        'event_sharif',
+        {
+            'type': 'send_message_to_frontend',
+            'message': "event_trigered_from_views"
+        }
+    )
     return HttpResponse('<p>Done</p>')
+
 
 class Home(APIView):
     renderer_classes = [TemplateHTMLRenderer]
