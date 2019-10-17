@@ -7,12 +7,12 @@ class EventConsumer(WebsocketConsumer):
         # self.room_name = self.scope['url_route']['kwargs']['room_name']
         # self.room_group_name = 'chat_%s' % self.room_name
         self.room_name = 'event'
-        self.room_group_name = self.room_name+"_sharif"
+        self.room_group_name = 'e61deb3caae54859a27e92066b50bed3'
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
         )
-        print(self.room_group_name)
+        print("Group_name",self.room_group_name)
         self.accept()
         print("#######CONNECTED############")
 

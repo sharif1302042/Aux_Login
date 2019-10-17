@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.postgres.indexes import BrinIndex
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -49,8 +51,20 @@ class LoginCredential(models.Model):
             BrinIndex(fields=["id", "created_at", "updated_at"]),
         )
 
-class Client(models.Model):
-    channel_name = models.CharField(max_length=100)
+
+class EventIdentifierManager(models.Manager):
+    def create_unique_identifier(self):
+        identifier = uuid.uuid4().hex
+        new_identifier_obj= self.create(identifier = str(identifier))
+        return new_identifier_obj
+
+class EventIdentifier(models.Model):
+    identifier = models.CharField(max_length=100)
+    objects= EventIdentifierManager()
 
     def __str__(self):
-        return self.channel_name
+        return self.identifier
+
+    class Meta:
+        verbose_name = "Event Idenifier"
+        verbose_name_plural = "Event Identifier List"

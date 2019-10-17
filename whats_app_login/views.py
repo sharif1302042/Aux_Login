@@ -10,8 +10,8 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import LoginCredential
-from .serializers import LoginCredentialSerializer
+from .models import LoginCredential, EventIdentifier
+from .serializers import LoginCredentialSerializer, LoginSerializer
 from applibs.circle_backends import circle_backends
 from applibs.qr_code_generators import qr_code_generator
 
@@ -23,12 +23,14 @@ class QrCodeGenerator(APIView):
     def get(self, request):
 
         try:
+            identifier = EventIdentifier.objects.create_unique_identifier()
+            print("idntifier",identifier)
             credentials = {
-                "device_name": request.user_agent.device,
+                #"device_name": request.user_agent.device,
                 "browser_name": request.user_agent.browser.family,
                 "browser_version": request.user_agent.browser.version_string,
                 "user_ip": request.META.get('REMOTE_ADDR'),
-                "identifier": 123456
+                "identifier": str(identifier)
             }
             qr_code = qr_code_generator.qr_code_with_pyqrcode(credentials)
             print(qr_code)
@@ -41,7 +43,7 @@ class QrCodeGenerator(APIView):
 class LoginCredentialFromAPP(APIView):
     def post(self, request):
         try:
-            serilizer = LoginCredentialSerializer(data=request.data, )  # valided requested data via serializer
+            serilizer = LoginSerializer(data=request.data, )  # valided requested data via serializer
             if serilizer.is_valid():
                 if LoginCredential.objects.verify_user(serilizer.data,
                                                        request.user.username):  # varify the requested user credentials
@@ -50,11 +52,12 @@ class LoginCredentialFromAPP(APIView):
                     #when user is successfully logged in.
                     channel_layer = get_channel_layer()
                     print(channel_layer)
+                    msg = "event Trigered with identifier {}".format(request.data['identifier'])
                     async_to_sync(channel_layer.group_send)(
-                        'event_sharif',
+                        request.data['identifier'],
                         {
                             'type': 'send_message_to_frontend',
-                            'message': "event_trigered_from_views"
+                            'message': msg
                         }
                     )
                     return Response({"credentials": serilizer.data, "user_name": request.user.username},

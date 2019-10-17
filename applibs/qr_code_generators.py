@@ -9,6 +9,7 @@ class GeneratorQRCode:
         qr_code = pyqrcode.create(json.dumps(context))
         with open('whats_app_login/static/qr_codes/code.png', 'wb') as fstream:
             qr_code.png(fstream, scale=5)
+        print("QR code generated")
 
     def qr_code_generator(self, context):
         qr = qrcode.QRCode(
